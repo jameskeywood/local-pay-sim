@@ -23,7 +23,7 @@ public class Generator {
                 network,
                 transactionService,
                 selectionService,
-                new ArrayList<UUID>()
+                new ArrayList<>()
         );
     }
 

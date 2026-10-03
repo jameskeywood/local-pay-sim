@@ -9,6 +9,13 @@ import java.util.UUID;
 public class TransactionService {
 
     public boolean processTransaction(Transaction transaction, UUID nodeId, Account account) {
+
+        // if transaction is from one node to itself, let's just return true
+        // no action required!
+        if (transaction.senderNodeId() == transaction.receiverNodeId()) {
+            return true;
+        }
+
         if (nodeId == transaction.senderNodeId()) {
             BigDecimal balance = account.getBalance();
             BigDecimal newBalance = balance.subtract(transaction.amount());
