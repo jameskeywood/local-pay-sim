@@ -19,7 +19,7 @@ public class LocalPayApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalPayApplication.class);
 
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
         logger.info("Starting LocalPay Simulation");
 
@@ -33,7 +33,7 @@ public class LocalPayApplication {
 
         // generate random nodes
 
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 100; i++) {
             Node randomNode = generator.generateRandomNode(network, transactionService, selectionService);
             totalNodeIdMapping.put(randomNode.getNodeId(), randomNode);
         }
@@ -55,7 +55,7 @@ public class LocalPayApplication {
         // generate 100 random transactions to be executed
 
         List<Transaction> transactionList = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 1000; i++) {
             transactionList.add(generator.generateRandomTransaction(totalNodeIdList));
         }
 
@@ -85,7 +85,7 @@ public class LocalPayApplication {
 
             logger.info("Node {} processed {}", senderNode.getNodeId(), transaction);
 
-            Thread.sleep(1000);
+            //Thread.sleep(1000);
         }
 
     }

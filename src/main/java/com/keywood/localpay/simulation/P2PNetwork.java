@@ -27,6 +27,9 @@ public class P2PNetwork implements Network {
         //senderNode.processTransaction(transaction); // this isn't perfect, the network doesnt usually do this first bit for us
         receiverNode.processTransaction(transaction);
 
+        // notice the order of the logs
+        // I feel like the above line should be in a separate thread, rather than a function call
+
         logger.info("Node {} sent Node {} {}", senderNodeId, receiverNodeId, transaction);
     }
 }

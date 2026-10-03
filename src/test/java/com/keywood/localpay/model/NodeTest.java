@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class NodeTest {
 
@@ -40,6 +41,38 @@ public class NodeTest {
         node1.processTransaction(transaction);
 
         assertEquals(BigDecimal.ZERO, node1.getAccount().getBalance());
+
+    }
+
+    // we really need to think about the case where
+    // a transaction occurs, money leaves the senders account
+    // but then the message never gets to the receiver, due
+    // to a network partition
+    //
+    // in this case, how do we return to the sender?
+    //
+    // i think the system should be improved, such that
+    // the payment between sender and receiver happens
+    // only once the receiver has been found!
+
+    @Test
+    void testProcessTransactionWithNoPeers() {
+
+        Network network = new P2PNetwork();
+        TransactionService transactionService = new TransactionService();
+        SelectionService selectionService = new RandomSelectionService();
+
+        Node node = createTestNode(network, transactionService, selectionService);
+
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                BigDecimal.TEN);
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            node.processTransaction(transaction);
+        });
 
     }
 
