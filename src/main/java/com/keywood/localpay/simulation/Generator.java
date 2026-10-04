@@ -3,12 +3,12 @@ package com.keywood.localpay.simulation;
 import com.keywood.localpay.model.Account;
 import com.keywood.localpay.model.Node;
 import com.keywood.localpay.model.Transaction;
-import com.keywood.localpay.services.TransactionService;
-import com.keywood.localpay.services.SelectionService;
+import com.keywood.localpay.payment.TransactionService;
+import com.keywood.localpay.routing.RoutingService;
+import com.keywood.localpay.routing.SelectionService;
 import com.keywood.localpay.util.Randomizer;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -17,12 +17,14 @@ public class Generator {
 
     public Node generateRandomNode(Network network,
                                    TransactionService transactionService,
+                                   RoutingService routingService,
                                    SelectionService selectionService) {
         return new Node(
                 UUID.randomUUID(),
-                new Account(UUID.randomUUID()),
+                new Account(UUID.randomUUID(), BigDecimal.valueOf(1000)),
                 network,
                 transactionService,
+                routingService,
                 selectionService,
                 new ArrayList<>()
         );
@@ -39,8 +41,6 @@ public class Generator {
                 UUID.randomUUID(),
                 randomSenderNodeId,
                 randomReceiverNodeId,
-                LocalDateTime.now(),
-                null,
                 randomAmount
         );
     }

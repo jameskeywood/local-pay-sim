@@ -1,15 +1,16 @@
 package com.keywood.localpay.model;
 
+import com.keywood.localpay.exceptions.InsufficientFundsException;
 import com.keywood.localpay.exceptions.UnreachableNodeException;
-import com.keywood.localpay.services.RandomSelectionService;
-import com.keywood.localpay.services.SelectionService;
-import com.keywood.localpay.services.TransactionService;
+import com.keywood.localpay.routing.RandomSelectionService;
+import com.keywood.localpay.routing.RoutingService;
+import com.keywood.localpay.routing.SelectionService;
+import com.keywood.localpay.payment.TransactionService;
 import com.keywood.localpay.simulation.Network;
 import com.keywood.localpay.simulation.P2PNetwork;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,15 +20,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class NodeTest {
 
+    private final BigDecimal ACCOUNT_BALANCE = BigDecimal.valueOf(1000);
+
     @Test
-    void testProcessTransactionSameSenderAndReceiver() throws UnreachableNodeException {
+    void testProcessTransactionSameSenderAndReceiver() throws UnreachableNodeException, InsufficientFundsException {
 
         Network network = new P2PNetwork();
         TransactionService transactionService = new TransactionService();
+        RoutingService routingService = new RoutingService();
         SelectionService selectionService = new RandomSelectionService();
 
-        Node node1 = createTestNode(network, transactionService, selectionService);
-        Node node2 = createTestNode(network, transactionService, selectionService);
+        Node node1 = createTestNode(network, transactionService, routingService, selectionService);
+        Node node2 = createTestNode(network, transactionService, routingService, selectionService);
 
         node1.setNodeIdList(List.of(node2.getNodeId()));
         node2.setNodeIdList(List.of(node1.getNodeId()));
@@ -38,13 +42,11 @@ public class NodeTest {
                 UUID.randomUUID(),
                 node1Id,
                 node1Id,
-                LocalDateTime.now(),
-                null,
                 BigDecimal.TEN);
 
-        node1.processTransaction(transaction);
+        node1.receiveTransaction(transaction);
 
-        assertEquals(BigDecimal.ZERO, node1.getAccount().getBalance());
+        assertEquals(ACCOUNT_BALANCE, node1.getAccount().getBalance());
 
     }
 
@@ -64,33 +66,33 @@ public class NodeTest {
 
         Network network = new P2PNetwork();
         TransactionService transactionService = new TransactionService();
+        RoutingService routingService = new RoutingService();
         SelectionService selectionService = new RandomSelectionService();
 
-        Node node = createTestNode(network, transactionService, selectionService);
+        Node node = createTestNode(network, transactionService, routingService, selectionService);
 
         Transaction transaction = new Transaction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                LocalDateTime.now(),
-                null,
                 BigDecimal.TEN);
 
         assertThrows(UnreachableNodeException.class, () -> {
-            node.processTransaction(transaction);
+            node.receiveTransaction(transaction);
         });
     }
 
     @Test
-    void testProcessTransactionWithNetworkPartition() {
+    void testProcessTransactionWithNetworkPartition() throws UnreachableNodeException, InsufficientFundsException {
         Network network = new P2PNetwork();
         TransactionService transactionService = new TransactionService();
+        RoutingService routingService = new RoutingService();
         SelectionService selectionService = new RandomSelectionService();
 
-        Node node1 = createTestNode(network, transactionService, selectionService);
-        Node node2 = createTestNode(network, transactionService, selectionService);
-        Node node3 = createTestNode(network, transactionService, selectionService);
-        Node node4 = createTestNode(network, transactionService, selectionService);
+        Node node1 = createTestNode(network, transactionService, routingService, selectionService);
+        Node node2 = createTestNode(network, transactionService, routingService, selectionService);
+        Node node3 = createTestNode(network, transactionService, routingService, selectionService);
+        Node node4 = createTestNode(network, transactionService, routingService, selectionService);
 
         node1.setNodeIdList(List.of(node2.getNodeId()));
         node2.setNodeIdList(List.of(node1.getNodeId()));
@@ -104,24 +106,25 @@ public class NodeTest {
                 UUID.randomUUID(),
                 node1Id,
                 node3Id,
-                LocalDateTime.now(),
-                null,
                 BigDecimal.TEN);
 
-        assertThrows(UnreachableNodeException.class, () -> {
-            node1.processTransaction(transaction);
-        });
+        node1.receiveTransaction(transaction);
+
+        assertEquals(ACCOUNT_BALANCE, node1.getAccount().getBalance());
+        assertEquals(ACCOUNT_BALANCE, node3.getAccount().getBalance());
     }
 
     Node createTestNode(Network network,
                         TransactionService transactionService,
+                        RoutingService routingService,
                         SelectionService selectionService) {
 
         return new Node(
                 UUID.randomUUID(),
-                new Account(UUID.randomUUID()),
+                new Account(UUID.randomUUID(), ACCOUNT_BALANCE),
                 network,
                 transactionService,
+                routingService,
                 selectionService,
                 new ArrayList<>()
         );

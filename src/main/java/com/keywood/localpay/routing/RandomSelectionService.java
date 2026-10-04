@@ -1,4 +1,4 @@
-package com.keywood.localpay.services;
+package com.keywood.localpay.routing;
 
 import com.keywood.localpay.exceptions.UnreachableNodeException;
 
