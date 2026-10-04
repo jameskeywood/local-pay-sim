@@ -1,5 +1,6 @@
 package com.keywood.localpay.model;
 
+import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.services.RandomSelectionService;
 import com.keywood.localpay.services.SelectionService;
 import com.keywood.localpay.services.TransactionService;
@@ -8,6 +9,7 @@ import com.keywood.localpay.simulation.P2PNetwork;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -18,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class NodeTest {
 
     @Test
-    void testProcessTransactionSameSenderAndReceiver() {
+    void testProcessTransactionSameSenderAndReceiver() throws UnreachableNodeException {
 
         Network network = new P2PNetwork();
         TransactionService transactionService = new TransactionService();
@@ -36,6 +38,8 @@ public class NodeTest {
                 UUID.randomUUID(),
                 node1Id,
                 node1Id,
+                LocalDateTime.now(),
+                null,
                 BigDecimal.TEN);
 
         node1.processTransaction(transaction);
@@ -68,12 +72,45 @@ public class NodeTest {
                 UUID.randomUUID(),
                 UUID.randomUUID(),
                 UUID.randomUUID(),
+                LocalDateTime.now(),
+                null,
                 BigDecimal.TEN);
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(UnreachableNodeException.class, () -> {
             node.processTransaction(transaction);
         });
+    }
 
+    @Test
+    void testProcessTransactionWithNetworkPartition() {
+        Network network = new P2PNetwork();
+        TransactionService transactionService = new TransactionService();
+        SelectionService selectionService = new RandomSelectionService();
+
+        Node node1 = createTestNode(network, transactionService, selectionService);
+        Node node2 = createTestNode(network, transactionService, selectionService);
+        Node node3 = createTestNode(network, transactionService, selectionService);
+        Node node4 = createTestNode(network, transactionService, selectionService);
+
+        node1.setNodeIdList(List.of(node2.getNodeId()));
+        node2.setNodeIdList(List.of(node1.getNodeId()));
+        node3.setNodeIdList(List.of(node4.getNodeId()));
+        node4.setNodeIdList(List.of(node3.getNodeId()));
+
+        UUID node1Id = node1.getNodeId();
+        UUID node3Id = node3.getNodeId();
+
+        Transaction transaction = new Transaction(
+                UUID.randomUUID(),
+                node1Id,
+                node3Id,
+                LocalDateTime.now(),
+                null,
+                BigDecimal.TEN);
+
+        assertThrows(UnreachableNodeException.class, () -> {
+            node1.processTransaction(transaction);
+        });
     }
 
     Node createTestNode(Network network,

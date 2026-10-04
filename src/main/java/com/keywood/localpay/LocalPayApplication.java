@@ -1,5 +1,6 @@
 package com.keywood.localpay;
 
+import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.model.Node;
 import com.keywood.localpay.model.Transaction;
 import com.keywood.localpay.services.RandomSelectionService;
@@ -81,9 +82,13 @@ public class LocalPayApplication {
 
             Node senderNode = totalNodeIdMapping.get(senderNodeId);
 
-            senderNode.processTransaction(transaction);
-
-            logger.info("Node {} processed {}", senderNode.getNodeId(), transaction);
+            try {
+                senderNode.processTransaction(transaction);
+                logger.info("Node {} processed {}", senderNode.getNodeId(), transaction);
+            }
+            catch (UnreachableNodeException e) {
+                logger.info("Node {} is unreachable", transaction.receiverNodeId(), e);
+            }
 
             //Thread.sleep(1000);
         }

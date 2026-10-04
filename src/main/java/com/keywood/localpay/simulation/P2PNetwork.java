@@ -1,5 +1,6 @@
 package com.keywood.localpay.simulation;
 
+import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.model.Node;
 import com.keywood.localpay.model.Transaction;
 import org.slf4j.Logger;
@@ -20,11 +21,9 @@ public class P2PNetwork implements Network {
     }
 
     // note that the receiver might not be the actual transaction receiver, same with sender!
-    public void sendTransaction(UUID senderNodeId, UUID receiverNodeId, Transaction transaction) {
-        Node senderNode = nodeIdMapping.get(senderNodeId);
-        Node receiverNode = nodeIdMapping.get(receiverNodeId);
+    public void sendTransaction(UUID senderNodeId, UUID receiverNodeId, Transaction transaction) throws UnreachableNodeException {
 
-        //senderNode.processTransaction(transaction); // this isn't perfect, the network doesnt usually do this first bit for us
+        Node receiverNode = nodeIdMapping.get(receiverNodeId);
         receiverNode.processTransaction(transaction);
 
         // notice the order of the logs

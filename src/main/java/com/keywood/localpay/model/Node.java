@@ -1,5 +1,6 @@
 package com.keywood.localpay.model;
 
+import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.simulation.Network;
 import com.keywood.localpay.services.SelectionService;
 import com.keywood.localpay.services.TransactionService;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class Node {
+
     // treat nodeId as it's IP address in the network
     private final UUID nodeId;
     private final Account account;
@@ -40,7 +42,7 @@ public class Node {
 
     // public void processMessage(byte[] data)
 
-    public void processTransaction(Transaction transaction) {
+    public void processTransaction(Transaction transaction) throws UnreachableNodeException {
         boolean successful = this.transactionService.processTransaction(transaction, this.nodeId, this.account);
 
         if (!successful) {

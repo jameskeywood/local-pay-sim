@@ -1,10 +1,12 @@
 package com.keywood.localpay.services;
 
-import com.keywood.localpay.model.Node;
+import com.keywood.localpay.exceptions.UnreachableNodeException;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface SelectionService {
-    public UUID selectNode(UUID nodeId, List<UUID> nodeIdList);
+
+    UUID selectNode(UUID nodeId, List<UUID> nodeIdList) throws UnreachableNodeException;
+
 }

@@ -8,6 +8,7 @@ import com.keywood.localpay.services.SelectionService;
 import com.keywood.localpay.util.Randomizer;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +39,8 @@ public class Generator {
                 UUID.randomUUID(),
                 randomSenderNodeId,
                 randomReceiverNodeId,
+                LocalDateTime.now(),
+                null,
                 randomAmount
         );
     }
