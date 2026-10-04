@@ -15,6 +15,7 @@
       devShells.x86_64-linux.default = pkgs.mkShell {
         packages = [
           pkgs.jdk21
+          pkgs.maven
           pkgs.jetbrains.idea
         ];
       };
