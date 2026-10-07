@@ -2,12 +2,8 @@ package com.keywood.localpay;
 
 import com.keywood.localpay.exceptions.InsufficientFundsException;
 import com.keywood.localpay.exceptions.UnreachableNodeException;
-import com.keywood.localpay.model.Node;
+import com.keywood.localpay.user.Node;
 import com.keywood.localpay.model.Transaction;
-import com.keywood.localpay.routing.RandomSelectionService;
-import com.keywood.localpay.routing.RoutingService;
-import com.keywood.localpay.routing.SelectionService;
-import com.keywood.localpay.payment.TransactionService;
 import com.keywood.localpay.simulation.Generator;
 import com.keywood.localpay.simulation.Network;
 import com.keywood.localpay.simulation.P2PNetwork;
@@ -27,9 +23,6 @@ public class LocalPayApplication {
         logger.info("Starting LocalPay Simulation");
 
         Network network = new P2PNetwork();
-        TransactionService transactionService = new TransactionService();
-        RoutingService routingService = new RoutingService();
-        SelectionService selectionService = new RandomSelectionService();
 
         Generator generator = new Generator();
 
@@ -38,7 +31,7 @@ public class LocalPayApplication {
         // generate random nodes
 
         for (int i = 0; i < 100; i++) {
-            Node randomNode = generator.generateRandomNode(network, transactionService, routingService, selectionService);
+            Node randomNode = generator.generateRandomNode(network);
             totalNodeIdMapping.put(randomNode.getNodeId(), randomNode);
         }
 
@@ -55,17 +48,6 @@ public class LocalPayApplication {
             List<UUID> randomNodeIdList = Randomizer.randomNElementsFromList(totalNodeIdList, numberOfNodes);
             node.setNodeIdList(randomNodeIdList);
         }
-
-        // generate 100 random transactions to be executed
-
-        /*
-        List<Transaction> transactionList = new ArrayList<>();
-        for (int i = 0; i < 1000; i++) {
-            transactionList.add(generator.generateRandomTransaction(totalNodeIdList));
-        }
-
-        logger.info("Generated {} random Transactions", transactionList.size());
-         */
 
         // for now, let's execute transactions sequentially
         // ideally we have some random ticker, generating transactions on the fly
@@ -91,7 +73,7 @@ public class LocalPayApplication {
             Node senderNode = totalNodeIdMapping.get(senderNodeId);
 
             try {
-                senderNode.receiveTransaction(transaction);
+                senderNode.receiveMessage(transaction);
                 logger.info("Node {} processed {}", senderNode.getNodeId(), transaction);
             }
             catch (UnreachableNodeException e) {

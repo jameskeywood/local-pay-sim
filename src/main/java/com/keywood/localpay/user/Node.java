@@ -1,7 +1,9 @@
-package com.keywood.localpay.model;
+package com.keywood.localpay.user;
 
 import com.keywood.localpay.exceptions.InsufficientFundsException;
 import com.keywood.localpay.exceptions.UnreachableNodeException;
+import com.keywood.localpay.model.Message;
+import com.keywood.localpay.model.Transaction;
 import com.keywood.localpay.routing.RoutingService;
 import com.keywood.localpay.simulation.Network;
 import com.keywood.localpay.routing.SelectionService;
@@ -48,69 +50,33 @@ public class Node {
         network.openConnection(nodeId, this);
     }
 
-    // public void receiveMessage(byte[] data)
+    public void receiveMessage(Message message) throws UnreachableNodeException, InsufficientFundsException {
 
-    public void receiveTransaction(Transaction transaction) throws UnreachableNodeException, InsufficientFundsException {
+        if (message instanceof Transaction transaction) {
+            // if transaction is from one node to itself, let's just return
+            // no action required! probably a better way to handle this
+            if (transaction.senderNodeId().equals(transaction.receiverNodeId())) {
+                return;
+            }
 
-        // if transaction is from one node to itself, let's just return
-        // no action required! probably a better way to handle this
-        if (transaction.senderNodeId().equals(transaction.receiverNodeId())) {
-            return;
+            // update seenTransactions
+            this.seenTransactions.merge(transaction.transactionId(), 1, Integer::sum);
         }
 
-        // update seenTransactions
-        this.seenTransactions.merge(transaction.transactionId(), 1, Integer::sum);
-
-        this.transactionService.processTransaction(
-                transaction,
+        this.transactionService.processMessage(
+                message,
                 this.nodeId,
                 this.account
         );
 
-        this.routingService.routeTransaction(
-                transaction,
+        this.routingService.routeMessage(
+                message,
                 this.nodeId,
                 this.network,
                 this.selectionService,
                 this.nodeIdList,
                 this.seenTransactions
         );
-    }
-
-    public void receiveConfirmation(Confirmation confirmation) throws UnreachableNodeException, InsufficientFundsException {
-
-        this.transactionService.processConfirmation(
-                confirmation,
-                this.nodeId,
-                this.account
-        );
-
-        this.routingService.routeConfirmation(
-                confirmation,
-                this.nodeId,
-                this.network,
-                this.selectionService,
-                this.nodeIdList
-        );
-
-    }
-
-    public void receiveCancellation(Cancellation cancellation) throws UnreachableNodeException, InsufficientFundsException {
-
-        this.transactionService.processCancellation(
-                cancellation,
-                this.nodeId,
-                this.account
-        );
-
-        this.routingService.routeCancellation(
-                cancellation,
-                this.nodeId,
-                this.network,
-                this.selectionService,
-                this.nodeIdList
-        );
-
     }
 
     public UUID getNodeId() {

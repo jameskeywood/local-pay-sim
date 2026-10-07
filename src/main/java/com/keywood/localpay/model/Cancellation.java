@@ -7,5 +7,5 @@ public record Cancellation(
         UUID transactionId,
         UUID senderNodeId,
         UUID receiverNodeId
-)
+) implements Message
 {}

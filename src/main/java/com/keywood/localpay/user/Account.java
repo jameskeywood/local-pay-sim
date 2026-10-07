@@ -1,6 +1,9 @@
-package com.keywood.localpay.model;
+package com.keywood.localpay.user;
 
 import com.keywood.localpay.exceptions.InsufficientFundsException;
+import com.keywood.localpay.model.Cancellation;
+import com.keywood.localpay.model.Confirmation;
+import com.keywood.localpay.model.Transaction;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -29,7 +32,7 @@ public class Account {
     public void createPendingOutgoing(Transaction transaction) throws InsufficientFundsException {
         BigDecimal newBalance = this.getBalance().subtract(transaction.amount());
 
-        if (newBalance.compareTo(BigDecimal.ZERO) > 0) {
+        if (newBalance.compareTo(BigDecimal.ZERO) >= 0) {
             this.pending.put(transaction.transactionId(), transaction.amount());
         }
         else {
