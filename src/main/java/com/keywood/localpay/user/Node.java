@@ -1,7 +1,6 @@
 package com.keywood.localpay.user;
 
 import com.keywood.localpay.exceptions.InsufficientFundsException;
-import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.model.Message;
 import com.keywood.localpay.model.Transaction;
 import com.keywood.localpay.routing.RoutingService;
@@ -22,10 +21,7 @@ public class Node {
     private final RoutingService routingService;
     private final SelectionService selectionService;
 
-    // cant be final, how can we populate nodeIdList
-    // at initialisation, since we don't know any
-    // other nodeIds
-    private List<UUID> nodeIdList;
+    private final Set<UUID> nodeIdSet;
 
     private final Map<UUID, Integer> seenTransactions;
 
@@ -34,8 +30,7 @@ public class Node {
                 Network network,
                 TransactionService transactionService,
                 RoutingService routingService,
-                SelectionService selectionService,
-                List<UUID> nodeIdList) {
+                SelectionService selectionService) {
 
         this.nodeId = nodeId;
         this.account = account;
@@ -43,23 +38,18 @@ public class Node {
         this.transactionService = transactionService;
         this.routingService = routingService;
         this.selectionService = selectionService;
-        this.nodeIdList = nodeIdList;
+
+        this.nodeIdSet = new HashSet<>();
+        this.nodeIdSet.add(this.nodeId); // the only node it knows about is itself, upon instantiation
 
         this.seenTransactions = new HashMap<>();
 
         network.openConnection(nodeId, this);
     }
 
-    public void receiveMessage(Message message) throws UnreachableNodeException, InsufficientFundsException {
+    public void receiveMessage(Message message) throws InsufficientFundsException {
 
         if (message instanceof Transaction transaction) {
-            // if transaction is from one node to itself, let's just return
-            // no action required! probably a better way to handle this
-            if (transaction.senderNodeId().equals(transaction.receiverNodeId())) {
-                return;
-            }
-
-            // update seenTransactions
             this.seenTransactions.merge(transaction.transactionId(), 1, Integer::sum);
         }
 
@@ -74,7 +64,7 @@ public class Node {
                 this.nodeId,
                 this.network,
                 this.selectionService,
-                this.nodeIdList,
+                this.nodeIdSet,
                 this.seenTransactions
         );
     }
@@ -87,7 +77,23 @@ public class Node {
         return this.account;
     }
 
-    public void setNodeIdList(List<UUID> nodeIdList) {
-        this.nodeIdList = nodeIdList;
+    public Set<UUID> getNodeIdSet() {
+        return this.nodeIdSet;
+    }
+
+    public void addToNodeIdSet(UUID nodeId) {
+        this.nodeIdSet.add(nodeId);
+    }
+
+    public void bulkAddToNodeIdSet(Set<UUID> nodeIdSet) {
+        this.nodeIdSet.addAll(nodeIdSet);
+    }
+
+    public void removeFromNodeIdSet(UUID nodeId) {
+        this.nodeIdSet.remove(nodeId);
+    }
+
+    public void bulkRemoveFromNodeIdSet(Set<UUID> nodeIdSet) {
+        this.nodeIdSet.removeAll(nodeIdSet);
     }
 }

@@ -1,7 +1,6 @@
 package com.keywood.localpay.simulation;
 
 import com.keywood.localpay.exceptions.InsufficientFundsException;
-import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.model.Message;
 import com.keywood.localpay.user.Node;
 import org.slf4j.Logger;
@@ -21,7 +20,7 @@ public class P2PNetwork implements Network {
         this.nodeIdMapping.put(nodeId, node);
     }
 
-    public void sendMessage(UUID senderNodeId, UUID receiverNodeId, Message message) throws UnreachableNodeException, InsufficientFundsException {
+    public void sendMessage(UUID senderNodeId, UUID receiverNodeId, Message message) throws InsufficientFundsException {
 
         Node receiverNode = nodeIdMapping.get(receiverNodeId);
         receiverNode.receiveMessage(message);

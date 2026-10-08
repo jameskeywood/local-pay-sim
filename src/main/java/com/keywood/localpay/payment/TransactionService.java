@@ -31,7 +31,8 @@ public class TransactionService {
         if (nodeId.equals(transaction.senderNodeId())) {
             account.createPendingOutgoing(transaction);
         }
-        else if (nodeId.equals(transaction.receiverNodeId())) {
+
+        if (nodeId.equals(transaction.receiverNodeId())) {
             account.acceptIncoming(transaction);
         }
 

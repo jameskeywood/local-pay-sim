@@ -1,10 +1,7 @@
 package com.keywood.localpay.util;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Randomizer {
     private static final Random random = new Random();
@@ -26,6 +23,31 @@ public class Randomizer {
         else {
             return copy.subList(0, n);
         }
+    }
+
+    public static <T> T randomElementFromSet(Set<T> set) {
+        int randomIndex = random.nextInt(set.size());
+
+        int i = 0;
+        for(T item : set)
+        {
+            if (i == randomIndex) {
+                return item;
+            }
+            i++;
+        }
+
+        return null;
+    }
+
+    public static <T> Set<T> randomNElementsFromSet(Set<T> set, int n) {
+        Set<T> randomSet = new HashSet<>();
+
+        while (randomSet.size() < n || randomSet.size() == set.size()) {
+            randomSet.add(randomElementFromSet(set));
+        }
+
+        return randomSet;
     }
 
     // this needs work, should take a upper and lower bound!

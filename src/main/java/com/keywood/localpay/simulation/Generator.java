@@ -9,8 +9,7 @@ import com.keywood.localpay.routing.RoutingService;
 import com.keywood.localpay.util.Randomizer;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public class Generator {
@@ -23,15 +22,14 @@ public class Generator {
                 network,
                 new TransactionService(),
                 new RoutingService(),
-                new RandomSelectionService(),
-                new ArrayList<>()
+                new RandomSelectionService()
         );
     }
 
-    public Transaction generateRandomTransaction(List<UUID> totalNodeIdList) {
+    public Transaction generateRandomTransaction(Set<UUID> totalNodeIdSet) {
 
-        UUID randomSenderNodeId = Randomizer.randomElementFromList(totalNodeIdList);
-        UUID randomReceiverNodeId = Randomizer.randomElementFromList(totalNodeIdList);
+        UUID randomSenderNodeId = Randomizer.randomElementFromSet(totalNodeIdSet);
+        UUID randomReceiverNodeId = Randomizer.randomElementFromSet(totalNodeIdSet);
 
         BigDecimal randomAmount = Randomizer.randomBigDecimal(BigDecimal.valueOf(0), BigDecimal.valueOf(100));
 

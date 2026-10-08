@@ -1,7 +1,6 @@
 package com.keywood.localpay;
 
 import com.keywood.localpay.exceptions.InsufficientFundsException;
-import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.user.Node;
 import com.keywood.localpay.model.Transaction;
 import com.keywood.localpay.simulation.Generator;
@@ -37,16 +36,14 @@ public class LocalPayApplication {
 
         logger.info("Generated {} random Nodes", totalNodeIdMapping.size());
 
-        List<UUID> totalNodeIdList = new ArrayList<>(totalNodeIdMapping.keySet());
-
         // populate each node's nodeIdList such that they have
         // a partial view of all the nodes on the network
 
         double networkView = 0.1;
         int numberOfNodes = (int) Math.ceil(networkView * totalNodeIdMapping.size());
         for (Node node : totalNodeIdMapping.values()) {
-            List<UUID> randomNodeIdList = Randomizer.randomNElementsFromList(totalNodeIdList, numberOfNodes);
-            node.setNodeIdList(randomNodeIdList);
+            Set<UUID> randomNodeIdSet = Randomizer.randomNElementsFromSet(totalNodeIdMapping.keySet(), numberOfNodes);
+            node.bulkAddToNodeIdSet(randomNodeIdSet);
         }
 
         // for now, let's execute transactions sequentially
@@ -57,7 +54,7 @@ public class LocalPayApplication {
         int transactionAmount = 1000;
 
         for (int i = 0; i < transactionAmount; i++) {
-            Transaction transaction = generator.generateRandomTransaction(totalNodeIdList);
+            Transaction transaction = generator.generateRandomTransaction(totalNodeIdMapping.keySet());
 
             // output node account balances
             String balancesString = "\n";
@@ -70,14 +67,9 @@ public class LocalPayApplication {
 
             UUID senderNodeId = transaction.senderNodeId();
 
-            Node senderNode = totalNodeIdMapping.get(senderNodeId);
-
             try {
-                senderNode.receiveMessage(transaction);
-                logger.info("Node {} processed {}", senderNode.getNodeId(), transaction);
-            }
-            catch (UnreachableNodeException e) {
-                logger.info("Node {} is unreachable", transaction.receiverNodeId(), e);
+                network.sendMessage(senderNodeId, senderNodeId, transaction);
+                logger.info("Node {} processed {}", senderNodeId, transaction);
             }
             catch (InsufficientFundsException e) {
                 logger.info("Node {} has insufficient funds", transaction.receiverNodeId(), e);

@@ -1,26 +1,22 @@
 package com.keywood.localpay.routing;
 
-import com.keywood.localpay.exceptions.UnreachableNodeException;
+import com.keywood.localpay.util.Randomizer;
 
-import java.util.List;
-import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 public class RandomSelectionService implements SelectionService {
 
-    public UUID selectNode(UUID targetNodeId, List<UUID> nodeIdList) throws UnreachableNodeException {
+    public UUID selectNode(UUID targetNodeId, Set<UUID> nodeIdSet) {
 
-        if (nodeIdList == null || nodeIdList.isEmpty()) {
-            throw new UnreachableNodeException("nodeIdList is null or empty");
-        }
+        // now, I know that nodeIdSet won't ever be empty
+        // but is it worth throwing an exception anyway? unchecked
 
-        if (nodeIdList.contains(targetNodeId)) {
+        if (nodeIdSet.contains(targetNodeId)) {
             return targetNodeId;
         }
 
-        Random random = new Random();
-        int randomIndex = random.nextInt(nodeIdList.size());
-        UUID selectedNodeId = nodeIdList.get(randomIndex);
+        UUID selectedNodeId = Randomizer.randomElementFromSet(nodeIdSet);
 
         return selectedNodeId;
     }

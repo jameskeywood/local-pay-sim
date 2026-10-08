@@ -1,15 +1,14 @@
 package com.keywood.localpay.routing;
 
 import com.keywood.localpay.exceptions.InsufficientFundsException;
-import com.keywood.localpay.exceptions.UnreachableNodeException;
 import com.keywood.localpay.model.Cancellation;
 import com.keywood.localpay.model.Confirmation;
 import com.keywood.localpay.model.Message;
 import com.keywood.localpay.model.Transaction;
 import com.keywood.localpay.simulation.Network;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class RoutingService {
@@ -18,8 +17,8 @@ public class RoutingService {
                              UUID nodeId,
                              Network network,
                              SelectionService selectionService,
-                             List<UUID> nodeIdList,
-                             Map<UUID, Integer> seenTransactions) throws UnreachableNodeException, InsufficientFundsException {
+                             Set<UUID> nodeIdSet,
+                             Map<UUID, Integer> seenTransactions) throws InsufficientFundsException {
 
         if (message instanceof Transaction transaction) {
             if (seenTransactions.get(transaction.transactionId()) > 3) {
@@ -49,7 +48,7 @@ public class RoutingService {
 
         if (!nodeId.equals(message.receiverNodeId())) {
             UUID targetNodeId = message.receiverNodeId();
-            UUID nextNodeId = selectionService.selectNode(targetNodeId, nodeIdList);
+            UUID nextNodeId = selectionService.selectNode(targetNodeId, nodeIdSet);
             network.sendMessage(nodeId, nextNodeId, message);
         }
     }
