@@ -1,6 +1,5 @@
 package com.keywood.localpay.routing;
 
-import com.keywood.localpay.exceptions.InsufficientFundsException;
 import com.keywood.localpay.model.Cancellation;
 import com.keywood.localpay.model.Confirmation;
 import com.keywood.localpay.model.Message;
@@ -18,7 +17,7 @@ public class RoutingService {
                              Network network,
                              SelectionService selectionService,
                              Set<UUID> nodeIdSet,
-                             Map<UUID, Integer> seenTransactions) throws InsufficientFundsException {
+                             Map<UUID, Integer> seenTransactions) {
 
         if (message instanceof Transaction transaction) {
             if (seenTransactions.get(transaction.transactionId()) > 3) {
@@ -31,7 +30,8 @@ public class RoutingService {
 
                 network.sendMessage(nodeId, nodeId, cancellation);
                 return;
-            } else if (nodeId.equals(transaction.receiverNodeId())) {
+            }
+            else if (nodeId.equals(transaction.receiverNodeId())) {
 
                 Confirmation confirmation = new Confirmation(
                         UUID.randomUUID(),

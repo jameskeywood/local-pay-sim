@@ -1,14 +1,13 @@
 package com.keywood.localpay;
 
-import com.keywood.localpay.exceptions.InsufficientFundsException;
 import com.keywood.localpay.user.Node;
-import com.keywood.localpay.model.Transaction;
-import com.keywood.localpay.simulation.Generator;
 import com.keywood.localpay.simulation.Network;
 import com.keywood.localpay.simulation.P2PNetwork;
 
 import java.util.*;
+import java.util.concurrent.Executors;
 
+import com.keywood.localpay.user.User;
 import com.keywood.localpay.util.Randomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,20 +16,20 @@ public class LocalPayApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalPayApplication.class);
 
+    private static final int NUM_USERS = 100;
+
     public static void main(String[] args) {
 
         logger.info("Starting LocalPay Simulation");
 
         Network network = new P2PNetwork();
 
-        Generator generator = new Generator();
-
         Map<UUID, Node> totalNodeIdMapping = new HashMap<>();
 
         // generate random nodes
 
-        for (int i = 0; i < 100; i++) {
-            Node randomNode = generator.generateRandomNode(network);
+        for (int i = 0; i < NUM_USERS; i++) {
+            Node randomNode = Randomizer.randomNode(network);
             totalNodeIdMapping.put(randomNode.getNodeId(), randomNode);
         }
 
@@ -46,37 +45,24 @@ public class LocalPayApplication {
             node.bulkAddToNodeIdSet(randomNodeIdSet);
         }
 
-        // for now, let's execute transactions sequentially
-        // ideally we have some random ticker, generating transactions on the fly
+        // now, let's create the users
 
-        // tell the sender node of the random transaction to start processing
+        Map<UUID, User> totalUserIdMapping = new HashMap<>();
 
-        int transactionAmount = 1000;
-
-        for (int i = 0; i < transactionAmount; i++) {
-            Transaction transaction = generator.generateRandomTransaction(totalNodeIdMapping.keySet());
-
-            // output node account balances
-            String balancesString = "\n";
-            for (Node node : totalNodeIdMapping.values()) {
-                balancesString += "Node " + node.getNodeId();
-                balancesString += " $" + node.getAccount().getBalance();
-                balancesString += "\n";
-            }
-            logger.info(balancesString);
-
-            UUID senderNodeId = transaction.senderNodeId();
-
-            try {
-                network.sendMessage(senderNodeId, senderNodeId, transaction);
-                logger.info("Node {} processed {}", senderNodeId, transaction);
-            }
-            catch (InsufficientFundsException e) {
-                logger.info("Node {} has insufficient funds", transaction.receiverNodeId(), e);
-            }
-
-            //Thread.sleep(1000);
+        for (Node node : totalNodeIdMapping.values()) {
+            User randomUser = Randomizer.randomUser(node, totalNodeIdMapping.keySet());
+            totalUserIdMapping.put(randomUser.getUserId(), randomUser);
         }
 
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+
+            for (Node node : totalNodeIdMapping.values()) {
+                executor.submit(node);
+            }
+
+            for (User user : totalUserIdMapping.values()) {
+                executor.submit(user);
+            }
+        }
     }
 }

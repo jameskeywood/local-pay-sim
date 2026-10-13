@@ -1,6 +1,5 @@
 package com.keywood.localpay;
 
-import com.keywood.localpay.exceptions.InsufficientFundsException;
 import com.keywood.localpay.model.Transaction;
 import com.keywood.localpay.simulation.Network;
 import com.keywood.localpay.simulation.P2PNetwork;
@@ -10,9 +9,13 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+
+// we can create integration tests by running nodes on virtual threads
+// and simulating our own transactions, instead of running User objects
 
 public class LocalPayApplicationTest {
 
@@ -20,7 +23,7 @@ public class LocalPayApplicationTest {
 
 
     @Test
-    void testSendTransactionSameSenderAndReceiver() throws InsufficientFundsException {
+    void testSendTransactionSameSenderAndReceiver() {
 
         Network network = new P2PNetwork();
 
@@ -34,7 +37,21 @@ public class LocalPayApplicationTest {
                 nodeId,
                 BigDecimal.TEN);
 
-        network.sendMessage(nodeId, nodeId, transaction);
+        ExecutorService executor = TestUtil.startNodes(node);
+
+        try {
+            node.deliver(transaction);
+        }
+        finally {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+            }
+        }
 
         assertEquals(ACCOUNT_BALANCE, node.getAccount().getBalance());
     }
@@ -70,7 +87,7 @@ public class LocalPayApplicationTest {
 
 
     @Test
-    void testSendTransactionPartitionedNetwork() throws InsufficientFundsException {
+    void testSendTransactionPartitionedNetwork() {
         Network network = new P2PNetwork();
 
         Node node1 = TestUtil.createTestNode(network, ACCOUNT_BALANCE);
@@ -92,7 +109,21 @@ public class LocalPayApplicationTest {
                 node3Id,
                 BigDecimal.TEN);
 
-        network.sendMessage(node1Id, node1Id, transaction);
+        ExecutorService executor = TestUtil.startNodes(node1, node2, node3, node4);
+
+        try {
+            node1.deliver(transaction);
+        }
+        finally {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+            }
+        }
 
         assertEquals(ACCOUNT_BALANCE, node1.getAccount().getBalance());
         assertEquals(ACCOUNT_BALANCE, node3.getAccount().getBalance());
@@ -127,10 +158,22 @@ public class LocalPayApplicationTest {
                 node3Id,
                 BigDecimal.TEN);
 
-        assertThrows(InsufficientFundsException.class, () -> {
-            network.sendMessage(node1Id, node1Id, transaction1);
-            network.sendMessage(node1Id, node1Id, transaction2);
-        });
+        ExecutorService executor = TestUtil.startNodes(node1, node2, node3);
+
+        try {
+            node1.deliver(transaction1);
+            node1.deliver(transaction2);
+        }
+        finally {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+            }
+        }
 
         assertEquals(BigDecimal.ZERO, node1.getAccount().getBalance());
         assertEquals(BigDecimal.valueOf(30), node2.getAccount().getBalance().add(node3.getAccount().getBalance()));

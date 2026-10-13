@@ -7,10 +7,16 @@ import com.keywood.localpay.routing.RoutingService;
 import com.keywood.localpay.simulation.Network;
 import com.keywood.localpay.routing.SelectionService;
 import com.keywood.localpay.payment.TransactionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class Node {
+public class Node implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(Node.class);
 
     // treat nodeId as it's IP address in the network
     private final UUID nodeId;
@@ -24,6 +30,8 @@ public class Node {
     private final Set<UUID> nodeIdSet;
 
     private final Map<UUID, Integer> seenTransactions;
+
+    private final BlockingQueue<Message> mailbox;
 
     public Node(UUID nodeId,
                 Account account,
@@ -44,10 +52,34 @@ public class Node {
 
         this.seenTransactions = new HashMap<>();
 
+        this.mailbox = new LinkedBlockingQueue<>();
+
         network.openConnection(nodeId, this);
     }
 
-    public void receiveMessage(Message message) throws InsufficientFundsException {
+    @Override
+    public void run() {
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                Message message = mailbox.take();
+                this.receiveMessage(message);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+            catch (InsufficientFundsException e) {
+                // should log here
+            }
+        }
+    }
+
+    public void deliver(Message message) {
+        this.logMessage(message);
+        mailbox.offer(message);
+    }
+
+    private void receiveMessage(Message message) throws InsufficientFundsException {
 
         if (message instanceof Transaction transaction) {
             this.seenTransactions.merge(transaction.transactionId(), 1, Integer::sum);
@@ -67,6 +99,10 @@ public class Node {
                 this.nodeIdSet,
                 this.seenTransactions
         );
+    }
+
+    private <T> void logMessage(T message) {
+        logger.info("Node {} received {}", this.nodeId, message);
     }
 
     public UUID getNodeId() {
