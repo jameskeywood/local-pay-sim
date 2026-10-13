@@ -1,6 +1,5 @@
 package com.keywood.localpay.model;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 public record Confirmation(
@@ -8,5 +7,5 @@ public record Confirmation(
         UUID transactionId,
         UUID senderNodeId,
         UUID receiverNodeId
-) implements Serializable
+) implements Message
 {}
