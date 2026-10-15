@@ -16,7 +16,7 @@ public class LocalPayApplication {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalPayApplication.class);
 
-    private static final int NUM_USERS = 100;
+    private static final int NUM_USERS = 1000;
 
     public static void main(String[] args) {
 
